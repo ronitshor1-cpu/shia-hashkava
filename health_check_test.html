@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CORS Test — שיח הקשבה</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 640px;
+      margin: 40px auto;
+      padding: 0 20px;
+      color: #1c2333;
+      background: #f4f7fb;
+    }
+    h1 { font-size: 1.2rem; color: #2557a7; margin-bottom: 6px; }
+    p.sub { font-size: 0.85rem; color: #6b7280; margin: 0 0 24px; }
+    button {
+      padding: 10px 22px;
+      background: #2557a7;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:disabled { opacity: 0.6; cursor: default; }
+    #result {
+      margin-top: 24px;
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+      word-break: break-all;
+      display: none;
+    }
+    .pass { background: #f0faf5; border: 1.5px solid #197a4a; color: #145c38; }
+    .fail { background: #fdf3f2; border: 1.5px solid #c0392b; color: #922b21; }
+    .label { font-weight: bold; display: block; font-size: 1.05rem; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+
+  <h1>בדיקת CORS — GitHub Pages → Apps Script</h1>
+  <p class="sub">
+    בודק: POST ← redirect ← קריאת תגובה ← JSON parsing<br>
+    ללא mode:'no-cors'. הצלחה רק עם תגובה מאושרת מהשרת.
+  </p>
+
+  <button id="btn" onclick="runTest()">בצע בדיקה</button>
+
+  <div id="result"></div>
+
+<script>
+  var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyWdphfXL7W60Ct5F4rrfdj-ZgPQaqQgKxDHv3OXZr5SNmoZrNuIVtd-VPFHPHc5DlM/exec';
+
+  function runTest() {
+    var btn = document.getElementById('btn');
+    var resultDiv = document.getElementById('result');
+
+    btn.disabled = true;
+    btn.textContent = 'שולח...';
+    resultDiv.style.display = 'none';
+    resultDiv.className = '';
+    resultDiv.textContent = '';
+
+    var meta = {
+      httpStatus:  '—',
+      responseType: '—',
+      finalUrl:    '—',
+      rawBody:     '—'
+    };
+
+    fetch(APPS_SCRIPT_URL, {
+      method:   'POST',
+      headers:  { 'Content-Type': 'text/plain;charset=UTF-8' },
+      body:     JSON.stringify({ action: 'health_check' }),
+      redirect: 'follow'
+      // ← אין mode: 'no-cors'
+    })
+    .then(function(res) {
+      meta.httpStatus   = res.status;
+      meta.responseType = res.type;
+      meta.finalUrl     = res.url || '—';
+
+      if (res.type === 'opaque') {
+        throw new Error('תגובה opaque — גוף התגובה אינו קריא (CORS blocked)');
+      }
+      return res.text();
+    })
+    .then(function(text) {
+      meta.rawBody = text;
+      var data = JSON.parse(text);
+
+      var passed = (data && data.status === 'success' && data.service === 'shia-hashkava');
+
+      show(passed, data, meta, null);
+    })
+    .catch(function(err) {
+      show(false, null, meta, err.message);
+    })
+    .then(function() {
+      btn.disabled = false;
+      btn.textContent = 'בצע בדיקה שוב';
+    });
+  }
+
+  function show(passed, data, meta, errMsg) {
+    var resultDiv = document.getElementById('result');
+    resultDiv.className = passed ? 'pass' : 'fail';
+    resultDiv.style.display = 'block';
+
+    var lines = [];
+
+    lines.push((passed ? '✅ PASS' : '❌ FAIL'));
+    lines.push('');
+
+    if (passed) {
+      lines.push('status:  ' + data.status);
+      lines.push('service: ' + data.service);
+    } else if (errMsg) {
+      lines.push('שגיאה: ' + errMsg);
+    } else if (data) {
+      lines.push('תגובת שרת לא צפויה:');
+      lines.push(JSON.stringify(data, null, 2));
+    }
+
+    lines.push('');
+    lines.push('── פרטי בקשה ──');
+    lines.push('HTTP status:   ' + meta.httpStatus);
+    lines.push('response.type: ' + meta.responseType);
+    lines.push('final URL:     ' + meta.finalUrl);
+    if (!passed && meta.rawBody !== '—') {
+      lines.push('raw body:      ' + meta.rawBody);
+    }
+
+    var span = document.createElement('span');
+    span.className = 'label';
+    span.textContent = passed ? '✅ PASS — CORS עובד מ-origin זה' : '❌ FAIL — ראה פרטים למטה';
+
+    resultDiv.textContent = lines.join('\n');
+  }
+</script>
+
+</body>
+</html>
