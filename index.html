@@ -48,9 +48,9 @@
 
     /* ---- כותרת עמוד ---- */
     .app-header {
-      background: var(--primary);
-      color: white;
-      padding: 26px 20px 22px;
+      background: transparent;
+      color: var(--text);
+      padding: 18px 20px 10px;
       text-align: center;
       margin-bottom: 0;
     }
@@ -499,6 +499,41 @@
       border-radius: var(--r-sm); padding: 8px 12px; margin-top: 10px;
     }
 
+    /* ── פס לוגו עליון ── */
+    .logo-bar {
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo-bar-inner {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 10px 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .north-logo {
+      height: 60px;
+      width: auto;
+    }
+    @media (max-width: 400px) {
+      .north-logo { height: 48px; }
+    }
+
+    /* ── תמונת גיבור (חוסן) ── */
+    .hero-banner {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: var(--r);
+      display: block;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 560px) {
+      .hero-banner { height: 130px; }
+    }
+
     /* ── מסך עדכון מוצלח / טעינה / שגיאת טעינה ── */
     .update-success-box { text-align: center; padding: 20px 0 14px; }
     .loading-box { text-align: center; padding: 40px 20px; color: var(--muted); }
@@ -515,11 +550,25 @@
   ══════════════════════════════════════════ -->
   <div id="screen-form">
 
+    <!-- פס לוגו מחוז צפון — מעל הכותרת הכחולה -->
+    <div class="logo-bar">
+      <div class="logo-bar-inner">
+        <img src="north-district-logo.png"
+             alt="לוגו מחוז צפון — משרד החינוך"
+             class="north-logo">
+      </div>
+    </div>
+
     <div class="app-header">
       <h1>שיח הקשבה לחיזוק החוסן</h1>
     </div>
 
     <div class="container">
+
+      <!-- תמונת חוסן — באנר ויזואלי -->
+      <img src="hosen.jpg"
+           alt="שיח הקשבה לחיזוק החוסן"
+           class="hero-banner">
 
       <!-- פסקת מבוא -->
       <div class="intro-box">
