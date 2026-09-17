@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>בדיקת create_report — Phase 2</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 640px;
+      margin: 40px auto;
+      padding: 0 20px;
+      color: #1c2333;
+      background: #f4f7fb;
+    }
+    h1 { font-size: 1.2rem; color: #2557a7; margin-bottom: 4px; }
+    p.sub { font-size: 0.85rem; color: #6b7280; margin: 0 0 20px; }
+
+    .warning {
+      background: #fff8e1;
+      border: 1.5px solid #f59e0b;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.88rem;
+      color: #92400e;
+      margin-bottom: 24px;
+      font-weight: bold;
+    }
+
+    .payload-box {
+      background: #f0f4ff;
+      border: 1px solid #c7d2fe;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.8rem;
+      color: #3730a3;
+      margin-bottom: 20px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      direction: ltr;
+      text-align: left;
+    }
+
+    button {
+      padding: 10px 22px;
+      background: #2557a7;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      min-height: 44px;
+    }
+    button:disabled { opacity: 0.5; cursor: default; }
+
+    #result {
+      margin-top: 24px;
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+      word-break: break-all;
+      display: none;
+    }
+    .pass { background: #f0faf5; border: 1.5px solid #197a4a; color: #145c38; }
+    .fail { background: #fdf3f2; border: 1.5px solid #c0392b; color: #922b21; }
+    .label { font-weight: bold; display: block; font-size: 1.05rem; margin-bottom: 8px; }
+
+    .token-notice {
+      margin-top: 16px;
+      padding: 10px 14px;
+      background: #ecfdf5;
+      border: 1px solid #6ee7b7;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      color: #065f46;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>בדיקת <code>create_report</code> — Phase 2 Step 1</h1>
+  <p class="sub">
+    בדיקת backward compatibility: payload ללא שדה <code>action</code> → ניתוב ל-create_report.
+  </p>
+
+  <div class="warning">
+    ⚠️ בדיקה זו כותבת רשומת TEST אמיתית ל-Google Sheets. יש ללחוץ פעם אחת בלבד.
+  </div>
+
+  <p style="font-size:0.85rem;color:#374151;margin-bottom:8px;">ה-payload שישלח:</p>
+  <div class="payload-box" id="payload-preview"></div>
+
+  <button id="btn" onclick="runTest()">בצע בדיקת create_report</button>
+
+  <div id="result"></div>
+  <div class="token-notice" id="token-notice"></div>
+
+<script>
+  var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyWdphfXL7W60Ct5F4rrfdj-ZgPQaqQgKxDHv3OXZr5SNmoZrNuIVtd-VPFHPHc5DlM/exec';
+
+  // payload מדויק לפי מבנה index.html — ללא שדה action (בדיקת backward compat)
+  var PAYLOAD = {
+    supervisor: {
+      name:  'בדיקת Phase 2',
+      role:  'מפקח/ת או ממונה',
+      email: 'phase2-test@example.com'
+    },
+    employees: [
+      {
+        name: 'עובד/ת בדיקה',
+        role: 'תפקיד בדיקה',
+        meetings: [
+          {
+            type:      'one_time',
+            date:      '2026-09-17',
+            dayOfWeek: '',
+            time:      '09:00',
+            location:  'משרד',
+            note:      'בדיקת מערכת Phase 2'
+          }
+        ]
+      }
+    ]
+  };
+
+  // הצגת ה-payload מראש (ללא מידע רגיש)
+  document.getElementById('payload-preview').textContent = JSON.stringify(PAYLOAD, null, 2);
+
+  function runTest() {
+    var btn       = document.getElementById('btn');
+    var resultDiv = document.getElementById('result');
+    var notice    = document.getElementById('token-notice');
+
+    // נעילה מיידית — מונעת לחיצה כפולה
+    btn.disabled    = true;
+    btn.textContent = 'שולח...';
+
+    resultDiv.style.display = 'none';
+    resultDiv.className     = '';
+    resultDiv.textContent   = '';
+    notice.style.display    = 'none';
+    notice.textContent      = '';
+
+    fetch(APPS_SCRIPT_URL, {
+      method:   'POST',
+      headers:  { 'Content-Type': 'text/plain;charset=UTF-8' },
+      body:     JSON.stringify(PAYLOAD),
+      redirect: 'follow'
+      // אין mode: 'no-cors' — חייבים לקרוא את התגובה
+    })
+    .then(function(res) {
+      if (res.type === 'opaque') {
+        throw new Error('תגובה opaque — גוף התגובה אינו קריא (CORS blocked)');
+      }
+      return res.json();
+    })
+    .then(function(data) {
+      var tokenPresent = (
+        data &&
+        typeof data.managementToken === 'string' &&
+        data.managementToken.length > 0
+      );
+
+      var passed = (
+        data &&
+        data.status === 'success' &&
+        tokenPresent &&
+        data.rowsWritten === 1
+      );
+
+      show(passed, data, tokenPresent, null);
+
+      // שמירת הטוקן ב-sessionStorage בלבד — לא localStorage, לא בקונסול
+      if (passed && tokenPresent) {
+        try {
+          sessionStorage.setItem('phase2_management_token', data.managementToken);
+          notice.textContent    = 'Management token stored in sessionStorage for the next test.';
+          notice.style.display  = 'block';
+        } catch (storageErr) {
+          notice.textContent    = 'שגיאה: לא ניתן לשמור טוקן ב-sessionStorage.';
+          notice.style.display  = 'block';
+        }
+      }
+    })
+    .catch(function(err) {
+      show(false, null, false, err.message);
+      // כפתור מופעל מחדש רק במקרה של שגיאת רשת — לא במקרה של הצלחה
+      btn.disabled    = false;
+      btn.textContent = 'נסה שוב';
+    });
+  }
+
+  function show(passed, data, tokenPresent, errMsg) {
+    var resultDiv = document.getElementById('result');
+    resultDiv.className     = passed ? 'pass' : 'fail';
+    resultDiv.style.display = 'block';
+
+    var lines = [];
+    lines.push(passed ? '✅ PASS' : '❌ FAIL');
+    lines.push('');
+
+    if (errMsg) {
+      lines.push('שגיאה: ' + errMsg);
+    } else if (data) {
+      lines.push('status:      ' + (data.status || '—'));
+      lines.push('rowsWritten: ' + (typeof data.rowsWritten !== 'undefined' ? data.rowsWritten : '—'));
+      lines.push('');
+      lines.push('managementToken returned: ' + (tokenPresent ? 'YES ✓' : 'NO ✗'));
+      if (tokenPresent) {
+        // אורך בלבד — הטוקן עצמו לא מוצג ולא נרשם לקונסול
+        lines.push('managementToken length:   ' + data.managementToken.length);
+      }
+
+      if (!passed) {
+        lines.push('');
+        lines.push('── סיבת כשל ──');
+        if (!data || data.status !== 'success') lines.push('• status אינו "success"');
+        if (!tokenPresent) lines.push('• managementToken חסר או ריק');
+        if (data && data.rowsWritten !== 1) lines.push('• rowsWritten !== 1 (קיבלנו: ' + data.rowsWritten + ')');
+        if (data && data.message) lines.push('• הודעת שרת: ' + data.message);
+      }
+    } else {
+      lines.push('לא התקבלה תגובה תקינה מהשרת.');
+    }
+
+    resultDiv.textContent = lines.join('\n');
+  }
+</script>
+
+</body>
+</html>
