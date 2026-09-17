@@ -1,0 +1,1740 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>שיח הקשבה לחיזוק החוסן</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ---- איפוס בסיסי ---- */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ---- משתני צבע ---- */
+    :root {
+      --bg:            #f4f7fb;
+      --surface:       #ffffff;
+      --border:        #dde3ed;
+      --primary:       #2557a7;
+      --primary-dark:  #1a4082;
+      --primary-light: #eaf1fb;
+      --danger:        #c0392b;
+      --danger-bg:     #fdf3f2;
+      --success:       #197a4a;
+      --muted:         #6b7280;
+      --text:          #1c2333;
+      --mock-bg:       #fffbeb;
+      --mock-border:   #f59e0b;
+      --mock-text:     #7c5c00;
+      --shadow:        0 2px 10px rgba(0,0,0,0.07);
+      --r:             10px;
+      --r-sm:          6px;
+    }
+
+    html { direction: rtl; }
+
+    body {
+      font-family: 'Heebo', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ---- מיכל מרכזי ---- */
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 0 16px 60px;
+    }
+
+    /* ---- כותרת עמוד ---- */
+    .app-header {
+      background: var(--primary);
+      color: white;
+      padding: 26px 20px 22px;
+      text-align: center;
+      margin-bottom: 0;
+    }
+
+    .app-header h1 {
+      font-size: 1.45rem;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    @media (min-width: 560px) {
+      .app-header h1 { font-size: 1.75rem; }
+    }
+
+    /* ---- כרטיסים ---- */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+
+    /* כרטיס עובד — עם גבול צבעוני ב-inline-start (ימין ב-RTL) */
+    .employee-card { border-inline-start: 4px solid var(--primary); }
+
+    /* כרטיס מפגש — מוטמע בתוך כרטיס עובד */
+    .meeting-card {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 16px;
+      margin-top: 10px;
+    }
+
+    /* ---- כותרות קטע ---- */
+    .section-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--primary);
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+    }
+
+    /* שורת כותרת בתוך כרטיס עובד */
+    .employee-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .employee-title { font-weight: 600; font-size: 1rem; }
+
+    /* שורת כותרת בתוך כרטיס מפגש */
+    .meeting-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .meeting-title { font-weight: 500; font-size: 0.875rem; color: var(--muted); }
+
+    /* ---- שדות טופס ---- */
+    .field-group { margin-bottom: 14px; }
+
+    /* שורת שדות — מחסנית במובייל, זה-לצד-זה ב-tablet+ */
+    .fields-row { display: flex; flex-direction: column; }
+
+    @media (min-width: 560px) {
+      .fields-row { flex-direction: row; gap: 12px; }
+      .fields-row .field-group { flex: 1; }
+    }
+
+    label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 5px;
+    }
+
+    /* כוכבית לשדה חובה */
+    .req { color: var(--danger); margin-inline-start: 2px; }
+
+    /* סגנון אחיד לכל שדות הקלט */
+    input[type="text"],
+    input[type="email"],
+    input[type="date"],
+    input[type="time"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      font-family: 'Heebo', sans-serif;
+      font-size: 0.95rem;
+      color: var(--text);
+      background: white;
+      transition: border-color 0.15s;
+      direction: rtl;
+    }
+
+    select { cursor: pointer; }
+
+    textarea { resize: vertical; min-height: 68px; }
+
+    /* הדגשה בפוקוס */
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37,87,167,0.1);
+    }
+
+    /* שדה לא תקין */
+    input.err, select.err, textarea.err {
+      border-color: var(--danger);
+      background: var(--danger-bg);
+    }
+
+    /* הודעת שגיאה מתחת לשדה */
+    .error-msg {
+      display: none;
+      color: var(--danger);
+      font-size: 0.78rem;
+      margin-top: 4px;
+    }
+
+    .error-msg.show { display: block; }
+
+    /* תצוגת יום בשבוע מחושב */
+    .day-display {
+      font-size: 0.85rem;
+      color: var(--primary);
+      font-weight: 600;
+      margin-top: 4px;
+      min-height: 1.3em;
+    }
+
+    /* טקסט עזר לשדה הערה */
+    .note-helper {
+      font-size: 0.76rem;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.55;
+    }
+
+    /* ---- בוחר סוג מפגש ---- */
+    .type-toggle {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .type-btn {
+      flex: 1;
+      padding: 9px;
+      background: white;
+      border: none;
+      font-family: 'Heebo', sans-serif;
+      font-size: 0.875rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    /* מפריד בין שני הכפתורים */
+    .type-btn + .type-btn { border-inline-start: 1px solid var(--border); }
+
+    /* כפתור פעיל */
+    .type-btn.active {
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+    }
+
+    /* ---- כפתורים ---- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 22px;
+      border-radius: var(--r-sm);
+      font-family: 'Heebo', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      min-height: 44px;
+      transition: all 0.15s;
+    }
+
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    /* כחול ראשי */
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:not(:disabled):hover { background: var(--primary-dark); }
+
+    /* מסגרת כחולה */
+    .btn-secondary {
+      background: white;
+      color: var(--primary);
+      border: 1.5px solid var(--primary);
+    }
+    .btn-secondary:hover { background: var(--primary-light); }
+
+    /* מחיקה — מסגרת אדומה קטנה */
+    .btn-danger {
+      background: white;
+      color: var(--danger);
+      border: 1px solid var(--danger);
+      font-size: 0.85rem;
+      padding: 7px 14px;
+      min-height: 36px;
+    }
+    .btn-danger:hover { background: var(--danger-bg); }
+
+    /* הוספה — מסגרת מקוקווית */
+    .btn-add {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border: 1.5px dashed var(--primary);
+      border-radius: var(--r-sm);
+      font-family: 'Heebo', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      min-height: 44px;
+      transition: background 0.15s;
+    }
+    .btn-add:hover { background: #d4e6fb; }
+
+    /* שורת כפתורי פעולה ראשיים */
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 24px;
+    }
+
+    /* כפתור הורדה כ-PDF */
+    .btn-pdf {
+      background: white;
+      color: #197a4a;
+      border: 1.5px solid #197a4a;
+    }
+    .btn-pdf:hover { background: #f0faf5; }
+
+    /* ---- הודעת שגיאה ברמת קטע ---- */
+    .alert-err {
+      display: none;
+      padding: 10px 14px;
+      background: var(--danger-bg);
+      border: 1px solid #f5c2bd;
+      border-radius: var(--r-sm);
+      color: var(--danger);
+      font-size: 0.875rem;
+      margin-bottom: 14px;
+    }
+    .alert-err.show { display: block; }
+
+    /* ---- תיבת מבוא ---- */
+    .intro-box {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 18px 20px;
+      margin-bottom: 18px;
+      line-height: 1.8;
+      font-size: 0.925rem;
+      box-shadow: var(--shadow);
+    }
+
+    /* ---- מסך סיכום ---- */
+    .review-supervisor {
+      background: var(--primary-light);
+      border: 1px solid #c2d8f5;
+      border-radius: var(--r);
+      padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+
+    .review-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .review-label {
+      font-size: 0.74rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 2px;
+    }
+
+    .review-value { font-weight: 600; font-size: 0.95rem; }
+
+    .review-employee {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-inline-start: 4px solid var(--primary);
+      border-radius: var(--r);
+      padding: 16px 20px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .review-emp-name { font-size: 1rem; font-weight: 700; margin-bottom: 2px; }
+    .review-emp-role { font-size: 0.875rem; color: var(--muted); margin-bottom: 12px; }
+
+    .review-meeting {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+
+    .review-mtg-type {
+      font-size: 0.74rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    /* ---- מסך הצלחה ---- */
+    .success-box {
+      text-align: center;
+      padding: 20px 0 14px;
+    }
+
+    .success-icon { font-size: 3.5rem; margin-bottom: 12px; }
+
+    .success-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--success);
+      margin-bottom: 8px;
+    }
+
+    .success-sub {
+      font-size: 0.95rem;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    /* באנר המדמה — גבול כתום מקווקו, רקע צהוב בהיר */
+    .mock-banner {
+      background: var(--mock-bg);
+      border: 2px dashed var(--mock-border);
+      border-radius: var(--r);
+      padding: 16px 20px;
+      margin-bottom: 16px;
+      text-align: start;
+    }
+
+    .mock-banner-title {
+      font-weight: 700;
+      color: var(--mock-text);
+      font-size: 0.925rem;
+      margin-bottom: 10px;
+    }
+
+    .mock-banner ul {
+      padding-inline-start: 18px;
+      font-size: 0.875rem;
+      color: var(--mock-text);
+      line-height: 1.9;
+    }
+
+    /* תיבת הקישור המדומה */
+    .mock-link-label {
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .mock-link-box {
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 10px 14px;
+      font-family: monospace;
+      font-size: 0.82rem;
+      color: var(--primary);
+      direction: ltr;
+      text-align: left;
+      word-break: break-all;
+    }
+
+    /* ── קישור ניהול — מסך הצלחה ── */
+    .management-link-section {
+      background: #f0faf5;
+      border: 1.5px solid #6ee7b7;
+      border-radius: var(--r);
+      padding: 18px 20px;
+      margin-top: 20px;
+    }
+    .management-link-title {
+      font-weight: 700;
+      color: #065f46;
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+    }
+    .management-link-sub {
+      font-size: 0.875rem;
+      color: #374151;
+      margin-bottom: 12px;
+      line-height: 1.65;
+    }
+    .management-link-url {
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 10px 14px;
+      font-family: monospace;
+      font-size: 0.78rem;
+      color: var(--primary);
+      direction: ltr;
+      text-align: left;
+      word-break: break-all;
+      margin-bottom: 10px;
+    }
+
+    /* ── מסך עדכון מוצלח / טעינה / שגיאת טעינה ── */
+    .update-success-box { text-align: center; padding: 20px 0 14px; }
+    .loading-box { text-align: center; padding: 40px 20px; color: var(--muted); }
+    .loading-spinner { font-size: 2.5rem; margin-bottom: 16px; }
+    .load-error-box { text-align: center; padding: 30px 20px; }
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ══════════════════════════════════════════
+       מסך הטופס הראשי
+  ══════════════════════════════════════════ -->
+  <div id="screen-form">
+
+    <div class="app-header">
+      <h1>שיח הקשבה לחיזוק החוסן</h1>
+    </div>
+
+    <div class="container">
+
+      <!-- פסקת מבוא -->
+      <div class="intro-box">
+        <strong>מפקחים/ות וממונים/ות יקרים/ות,</strong><br><br>
+        בהמשך להטמעת המודל לחיזוק החוסן והשלומות והעצמת המפקחים/ות ועובדי/ות המינהל,
+        כל מפקח/ת ממונה במחוז יקיים שיח מקרב עם עובדיו במטרה לקדם את תחושת
+        השייכות והשלומות. בבקשה עדכנו בטופס את פרטי המפגשים.
+      </div>
+
+      <!-- ── פרטי מפקח ── -->
+      <div class="card">
+        <div class="section-title">פרטי מפקח/ת או ממונה</div>
+
+        <div class="field-group">
+          <label for="sup-name">שם מלא <span class="req">*</span></label>
+          <input type="text" id="sup-name" placeholder="שם מלא">
+          <span class="error-msg" id="err-sup-name">יש להזין שם מלא</span>
+        </div>
+
+        <div class="fields-row">
+          <div class="field-group">
+            <label for="sup-role">תפקיד <span class="req">*</span></label>
+            <input type="text" id="sup-role" placeholder="תפקיד">
+            <span class="error-msg" id="err-sup-role">יש להזין תפקיד</span>
+          </div>
+          <div class="field-group" id="sup-email-section">
+            <label for="sup-email">כתובת מייל <span class="req">*</span></label>
+            <input type="email" id="sup-email" placeholder="example@mail.com"
+                   dir="ltr" style="text-align:right">
+            <span class="error-msg" id="err-sup-email">יש להזין כתובת מייל תקינה</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── עובדים ומפגשים ── -->
+      <div class="card">
+        <div class="section-title">עובדים/ות ומפגשים</div>
+
+        <!-- שגיאה: אין עובדים בכלל -->
+        <span class="alert-err" id="err-no-employees">
+          יש להוסיף לפחות עובד/ת אחד/ת עם מפגש אחד לפחות.
+        </span>
+
+        <!-- כרטיסי העובדים ימולאו כאן בזמן ריצה -->
+        <div id="employees-container"></div>
+
+        <button type="button" class="btn-add" onclick="addEmployee()">
+          + הוספת עובד/ת
+        </button>
+      </div>
+
+      <!-- כפתור המשך -->
+      <div class="form-actions">
+        <button type="button" class="btn btn-primary" onclick="goToReview()">
+          המשך לסיכום
+        </button>
+      </div>
+
+    </div>
+  </div><!-- end screen-form -->
+
+
+  <!-- ══════════════════════════════════════════
+       מסך סיכום לפני שליחה
+  ══════════════════════════════════════════ -->
+  <div id="screen-review" style="display:none">
+
+    <div class="app-header">
+      <h1>סיכום — בדיקה לפני שליחה</h1>
+    </div>
+
+    <div class="container">
+
+      <!-- תוכן הסיכום ימולא בזמן ריצה -->
+      <div id="review-content"></div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-primary" id="btn-submit" onclick="submitForm()">
+          שליחת הטופס
+        </button>
+        <button type="button" class="btn btn-pdf" onclick="downloadPdf()">
+          הורדה כ-PDF
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="goToForm()">
+          חזרה לעריכה
+        </button>
+      </div>
+
+      <!-- הודעת שגיאה בשליחה — מוצגת רק כשיש שגיאה -->
+      <div id="submit-error" style="display:none;
+           padding:12px 16px; background:#fdf3f2; border:1px solid #f5c2bd;
+           border-radius:6px; color:#c0392b; font-size:0.9rem; margin-top:12px;">
+      </div>
+
+      <!-- באנר conflict — מוצג רק כשיש התנגשות גרסאות בשמירה -->
+      <div id="conflict-banner" style="display:none; background:#fdf6ec; border:1.5px solid #e5a428;
+           border-radius:6px; padding:14px 16px; margin-top:12px; font-size:0.9rem;
+           color:#7c4a03; line-height:1.65;">
+        <strong>הדיווח עודכן בחלון אחר</strong><br>
+        השינויים שלך לא נשמרו. ניתן להמשיך לערוך ולנסות לשמור שוב, או לטעון את הגרסה העדכנית מהשרת — פעולה זו תמחק את השינויים הנוכחיים שלך.
+        <div style="margin-top:12px;">
+          <button type="button" onclick="reloadFromServer()"
+                  style="padding:8px 18px; background:#7c4a03; color:#fff; border:none;
+                         border-radius:5px; font-size:0.875rem; cursor:pointer; min-height:36px;">
+            טעינת הגרסה העדכנית
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- end screen-review -->
+
+
+  <!-- ══════════════════════════════════════════
+       מסך הצלחה — Phase 1
+  ══════════════════════════════════════════ -->
+  <div id="screen-success" style="display:none">
+
+    <div class="app-header">
+      <h1>שיח הקשבה לחיזוק החוסן</h1>
+    </div>
+
+    <div class="container">
+      <div class="card">
+
+        <div class="success-box">
+          <div class="success-icon">✅</div>
+          <div class="success-title">הדיווח נשמר בהצלחה</div>
+          <div class="success-sub">תודה על עדכון פרטי המפגשים.</div>
+        </div>
+
+        <!-- קישור ניהול — מוצג רק לאחר הגשה ראשונה עם טוקן -->
+        <div class="management-link-section" id="management-link-section" style="display:none">
+          <div class="management-link-title">קישור אישי לניהול הדיווח</div>
+          <div class="management-link-sub">
+            שמור/י את הקישור הזה במקום בטוח. הוא יאפשר לך לחזור ולעדכן את
+            הדיווח בכל עת — להוסיף עובדים, לשנות פרטי מפגשים, או להסיר ישנים.
+            <br>הקישור אינו נשלח למייל — שמור/י אותו עכשיו.
+          </div>
+          <div class="management-link-url" id="management-link-url"></div>
+          <button type="button" class="btn btn-secondary" onclick="copyManagementLink()"
+                  id="btn-copy-link"
+                  style="font-size:0.9rem;padding:8px 18px;min-height:40px">
+            העתקת הקישור
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- end screen-success -->
+
+
+  <!-- ══════════════════════════════════════════
+       מסך עדכון מוצלח (save_report)
+  ══════════════════════════════════════════ -->
+  <div id="screen-update-success" style="display:none">
+    <div class="app-header">
+      <h1>שיח הקשבה לחיזוק החוסן</h1>
+    </div>
+    <div class="container">
+      <div class="card">
+        <div class="update-success-box">
+          <div class="success-icon">✅</div>
+          <div class="success-title">השינויים נשמרו בהצלחה</div>
+          <div class="success-sub">הדיווח עודכן.</div>
+        </div>
+        <div style="text-align:center;margin-top:16px">
+          <button type="button" class="btn btn-secondary"
+                  onclick="showScreen('form');window.scrollTo({top:0,behavior:'smooth'})">
+            חזרה לעריכה
+          </button>
+        </div>
+      </div>
+    </div>
+  </div><!-- end screen-update-success -->
+
+
+  <!-- ══════════════════════════════════════════
+       מסך טעינה (load_report)
+  ══════════════════════════════════════════ -->
+  <div id="screen-loading" style="display:none">
+    <div class="app-header">
+      <h1>שיח הקשבה לחיזוק החוסן</h1>
+    </div>
+    <div class="container">
+      <div class="card">
+        <div class="loading-box">
+          <div class="loading-spinner">⏳</div>
+          <div>טוען את הדיווח...</div>
+        </div>
+      </div>
+    </div>
+  </div><!-- end screen-loading -->
+
+
+  <!-- ══════════════════════════════════════════
+       מסך שגיאת טעינה
+  ══════════════════════════════════════════ -->
+  <div id="screen-load-error" style="display:none">
+    <div class="app-header">
+      <h1>שיח הקשבה לחיזוק החוסן</h1>
+    </div>
+    <div class="container">
+      <div class="card">
+        <div class="load-error-box">
+          <div style="font-size:2rem;margin-bottom:12px">⚠️</div>
+          <div id="load-error-message"
+               style="font-weight:600;color:var(--danger);margin-bottom:8px">
+            הגישה אינה מורשית.
+          </div>
+          <div style="font-size:0.85rem;color:var(--muted)">
+            אם ברשותך קישור ניהול תקין, נסה/י לפתוח אותו שנית.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- end screen-load-error -->
+
+</div><!-- end #app -->
+
+
+<script>
+// ── כתובת Apps Script — יש להחליף לאחר פריסה ──
+// מעתיקים את ה-Web App URL לאחר Deploy → New deployment
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyWdphfXL7W60Ct5F4rrfdj-ZgPQaqQgKxDHv3OXZr5SNmoZrNuIVtd-VPFHPHc5DlM/exec';
+
+
+// ══════════════════════════════════════════════════════
+// מצב ניהול (Phase 2) — מאותחל לפני שאר ה-state
+// ══════════════════════════════════════════════════════
+
+var managementMode     = false; // true כשנפתח דרך #token=
+var currentToken       = null;  // הטוקן הגולמי (43 תווים)
+var deletedEmployeeIds = [];    // UUIDs של עובדים שהוסרו בסשן זה
+var deletedMeetingIds  = [];    // UUIDs של מפגשים שהוסרו בסשן זה
+
+
+// ══════════════════════════════════════════════════════
+// מצב הטופס — אובייקט אחד שמחזיק את כל הנתונים
+// ══════════════════════════════════════════════════════
+
+var state = {
+  supervisor:    { name: '', role: '', email: '' },
+  employees:     [],
+  reportVersion: null  // מספר גרסה לניהול מקביליות (Phase 2)
+};
+
+var nextEmpId = 1;  // מונה עובדים
+var nextMtgId = 1;  // מונה מפגשים
+
+// ימי השבוע בעברית (לפי getDay — 0=ראשון)
+var DAYS_HE = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+
+
+// ══════════════════════════════════════════════════════
+// כלי עזר — מניעת XSS ע"י בריחה מתווי HTML
+// ══════════════════════════════════════════════════════
+
+function escHtml(str) {
+  return (str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+
+// ══════════════════════════════════════════════════════
+// חישוב שם יום בשבוע מתאריך (למפגש חד-פעמי)
+// ══════════════════════════════════════════════════════
+
+function getDayName(dateStr) {
+  if (!dateStr) return '';
+  // T12:00:00 — מונע בעיות של timezone שעלולות לשנות את התאריך
+  var d = new Date(dateStr + 'T12:00:00');
+  if (isNaN(d.getTime())) return '';
+  return DAYS_HE[d.getDay()];
+}
+
+
+// ══════════════════════════════════════════════════════
+// קריאת ערכים מה-DOM לתוך ה-state
+// נקרא לפני כל שינוי מבני (הוספה/מחיקה/החלפת סוג)
+// ══════════════════════════════════════════════════════
+
+function collectFromDOM() {
+  var nEl = document.getElementById('sup-name');
+  var rEl = document.getElementById('sup-role');
+  var eEl = document.getElementById('sup-email');
+  if (nEl) state.supervisor.name  = nEl.value;
+  if (rEl) state.supervisor.role  = rEl.value;
+  if (eEl) state.supervisor.email = eEl.value;
+
+  state.employees.forEach(function(emp) {
+    var enEl = document.getElementById('emp-name-' + emp.id);
+    var erEl = document.getElementById('emp-role-' + emp.id);
+    if (enEl) emp.name = enEl.value;
+    if (erEl) emp.role = erEl.value;
+
+    emp.meetings.forEach(function(mtg) {
+      var tEl    = document.getElementById('mtg-time-'     + mtg.id);
+      var lEl    = document.getElementById('mtg-location-' + mtg.id);
+      var noteEl = document.getElementById('mtg-note-'     + mtg.id);
+      if (tEl)    mtg.time     = tEl.value;
+      if (lEl)    mtg.location = lEl.value;
+      if (noteEl) mtg.note     = noteEl.value;
+
+      if (mtg.type === 'one_time') {
+        var dEl = document.getElementById('mtg-date-' + mtg.id);
+        if (dEl) {
+          mtg.date      = dEl.value;
+          mtg.dayOfWeek = getDayName(dEl.value);
+        }
+      } else {
+        var dowEl = document.getElementById('mtg-dow-' + mtg.id);
+        if (dowEl) mtg.dayOfWeek = dowEl.value;
+      }
+    });
+  });
+}
+
+
+// ══════════════════════════════════════════════════════
+// בדיקת זמינות crypto.randomUUID — נדרש במצב ניהול
+// ══════════════════════════════════════════════════════
+
+function cryptoAvailable() {
+  if (!window.crypto || typeof window.crypto.randomUUID !== 'function') {
+    alert('הדפדפן אינו תומך ביצירת מזהים מאובטחים. אנא עדכן/י את הדפדפן ונסה/י שנית.');
+    return false;
+  }
+  return true;
+}
+
+
+// ══════════════════════════════════════════════════════
+// הוספת עובד חדש עם מפגש ראשוני ריק
+// ══════════════════════════════════════════════════════
+
+function addEmployee() {
+  if (managementMode && !cryptoAvailable()) return;
+  collectFromDOM();
+  var empId = 'e' + (nextEmpId++);
+  var mtgId = 'm' + (nextMtgId++);
+  var newEmp = {
+    id: empId, name: '', role: '',
+    meetings: [{
+      id: mtgId, type: 'one_time', date: '', dayOfWeek: '', time: '', location: '', note: ''
+    }]
+  };
+  // במצב ניהול: כל ישות חדשה מקבלת UUID יציב לתשתית save_report
+  if (managementMode) {
+    newEmp.employeeId            = crypto.randomUUID();
+    newEmp.meetings[0].meetingId = crypto.randomUUID();
+  }
+  state.employees.push(newEmp);
+  renderEmployees();
+}
+
+
+// ══════════════════════════════════════════════════════
+// מחיקת עובד (דורש אישור) — כולל כל המפגשים שלו
+// ══════════════════════════════════════════════════════
+
+function removeEmployee(empId) {
+  if (!confirm('האם להסיר עובד/ת זה/ת מהטופס, כולל כל המפגשים?')) return;
+  collectFromDOM();
+  // במצב ניהול: מעקב אחר ה-UUID כדי שהשרת יבצע soft-delete
+  if (managementMode) {
+    var empToDelete = state.employees.find(function(e) { return e.id === empId; });
+    if (empToDelete && empToDelete.employeeId) {
+      deletedEmployeeIds.push(empToDelete.employeeId);
+      // מפגשים נמחקים ע"י השרת כחלק ממחיקת העובד — אין צורך להוסיפם בנפרד
+    }
+  }
+  state.employees = state.employees.filter(function(e) { return e.id !== empId; });
+  renderEmployees();
+}
+
+
+// ══════════════════════════════════════════════════════
+// הוספת מפגש לעובד קיים
+// ══════════════════════════════════════════════════════
+
+function addMeeting(empId) {
+  if (managementMode && !cryptoAvailable()) return;
+  collectFromDOM();
+  var emp = state.employees.find(function(e) { return e.id === empId; });
+  if (!emp) return;
+  var mtgId = 'm' + (nextMtgId++);
+  var newMtg = { id: mtgId, type: 'one_time', date: '', dayOfWeek: '', time: '', location: '', note: '' };
+  if (managementMode) {
+    newMtg.meetingId = crypto.randomUUID();
+  }
+  emp.meetings.push(newMtg);
+  renderEmployees();
+}
+
+
+// ══════════════════════════════════════════════════════
+// מחיקת מפגש (דורש אישור)
+// ══════════════════════════════════════════════════════
+
+function removeMeeting(empId, mtgId) {
+  if (!confirm('האם למחוק מפגש זה?')) return;
+  collectFromDOM();
+  var emp = state.employees.find(function(e) { return e.id === empId; });
+  if (!emp) return;
+  // במצב ניהול: מעקב אחר ה-UUID לsoft-delete בשרת
+  if (managementMode) {
+    var mtgToDelete = emp.meetings.find(function(m) { return m.id === mtgId; });
+    if (mtgToDelete && mtgToDelete.meetingId) {
+      deletedMeetingIds.push(mtgToDelete.meetingId);
+    }
+  }
+  emp.meetings = emp.meetings.filter(function(m) { return m.id !== mtgId; });
+  renderEmployees();
+}
+
+
+// ══════════════════════════════════════════════════════
+// שינוי סוג המפגש: חד-פעמי ↔ קבוע
+// מאפס שדות תאריך/יום שלא שייכים לסוג החדש
+// ══════════════════════════════════════════════════════
+
+function setMeetingType(empId, mtgId, type) {
+  collectFromDOM();
+  var emp = state.employees.find(function(e) { return e.id === empId; });
+  if (!emp) return;
+  var mtg = emp.meetings.find(function(m) { return m.id === mtgId; });
+  if (!mtg) return;
+  mtg.type      = type;
+  mtg.date      = '';
+  mtg.dayOfWeek = '';
+  renderEmployees();
+}
+
+
+// ══════════════════════════════════════════════════════
+// עדכון תצוגת יום בשבוע בזמן אמת (כשמשנים תאריך)
+// ══════════════════════════════════════════════════════
+
+function onDateChange(mtgId) {
+  var dEl    = document.getElementById('mtg-date-' + mtgId);
+  var dispEl = document.getElementById('mtg-day-'  + mtgId);
+  if (!dEl || !dispEl) return;
+  var day = getDayName(dEl.value);
+  dispEl.textContent = day ? 'יום ' + day : '';
+}
+
+
+// ══════════════════════════════════════════════════════
+// רינדור כרטיסי העובדים מה-state לתוך ה-DOM
+// ══════════════════════════════════════════════════════
+
+function renderEmployees() {
+  var container = document.getElementById('employees-container');
+  if (!container) return;
+
+  if (state.employees.length === 0) {
+    container.innerHTML = '<p style="color:#6b7280;text-align:center;padding:10px 0">לא נוספו עובדים/ות עדיין.</p>';
+    return;
+  }
+
+  container.innerHTML = state.employees.map(function(emp, idx) {
+    return renderEmployeeCard(emp, idx);
+  }).join('');
+}
+
+function renderEmployeeCard(emp, idx) {
+  var meetingsHtml = emp.meetings.map(function(mtg) {
+    return renderMeetingCard(emp.id, mtg);
+  }).join('');
+
+  return (
+    '<div class="card employee-card" id="ecard-' + emp.id + '">' +
+      '<div class="employee-header">' +
+        '<span class="employee-title">עובד/ת ' + (idx + 1) + '</span>' +
+        '<button type="button" class="btn btn-danger" onclick="removeEmployee(\'' + emp.id + '\')">' +
+          'הסרת עובד/ת מהטופס' +
+        '</button>' +
+      '</div>' +
+
+      '<div class="fields-row">' +
+        '<div class="field-group">' +
+          '<label for="emp-name-' + emp.id + '">שם מלא <span class="req">*</span></label>' +
+          '<input type="text" id="emp-name-' + emp.id + '" value="' + escHtml(emp.name) + '" placeholder="שם מלא">' +
+          '<span class="error-msg" id="err-emp-name-' + emp.id + '">יש להזין שם עובד/ת</span>' +
+        '</div>' +
+        '<div class="field-group">' +
+          '<label for="emp-role-' + emp.id + '">תפקיד <span class="req">*</span></label>' +
+          '<input type="text" id="emp-role-' + emp.id + '" value="' + escHtml(emp.role) + '" placeholder="תפקיד">' +
+          '<span class="error-msg" id="err-emp-role-' + emp.id + '">יש להזין תפקיד</span>' +
+        '</div>' +
+      '</div>' +
+
+      '<div style="margin-top:16px">' +
+        '<div style="font-size:0.875rem;font-weight:600;color:#4b5563;margin-bottom:6px">מפגשים</div>' +
+        '<span class="error-msg" id="err-emp-mtg-' + emp.id + '">יש להוסיף לפחות מפגש אחד</span>' +
+        meetingsHtml +
+        '<button type="button" class="btn-add" onclick="addMeeting(\'' + emp.id + '\')">+ הוספת מפגש</button>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function renderMeetingCard(empId, mtg) {
+  var isOneTime = mtg.type === 'one_time';
+
+  // שדות ספציפיים לפי סוג המפגש
+  var typeSpecificFields = isOneTime
+    // ── חד-פעמי: שדה תאריך + תצוגת יום מחושבת ──
+    ? ('<div class="field-group">' +
+        '<label for="mtg-date-' + mtg.id + '">תאריך <span class="req">*</span></label>' +
+        '<input type="date" id="mtg-date-' + mtg.id + '" value="' + escHtml(mtg.date) + '" oninput="onDateChange(\'' + mtg.id + '\')">' +
+        '<div class="day-display" id="mtg-day-' + mtg.id + '">' + (mtg.dayOfWeek ? 'יום ' + mtg.dayOfWeek : '') + '</div>' +
+        '<span class="error-msg" id="err-mtg-date-' + mtg.id + '">יש לבחור תאריך</span>' +
+      '</div>')
+    // ── קבוע: בחירת יום מרשימה ──
+    : ('<div class="field-group">' +
+        '<label for="mtg-dow-' + mtg.id + '">יום בשבוע <span class="req">*</span></label>' +
+        '<select id="mtg-dow-' + mtg.id + '">' +
+          '<option value="">בחר יום...</option>' +
+          DAYS_HE.map(function(d) {
+            return '<option value="' + d + '"' + (mtg.dayOfWeek === d ? ' selected' : '') + '>' + d + '</option>';
+          }).join('') +
+        '</select>' +
+        '<span class="error-msg" id="err-mtg-dow-' + mtg.id + '">יש לבחור יום בשבוע</span>' +
+      '</div>');
+
+  return (
+    '<div class="meeting-card" id="mcard-' + mtg.id + '">' +
+
+      '<div class="meeting-header">' +
+        '<span class="meeting-title">מפגש</span>' +
+        '<button type="button" class="btn btn-danger" onclick="removeMeeting(\'' + empId + '\',\'' + mtg.id + '\')">מחיקה</button>' +
+      '</div>' +
+
+      // בוחר סוג מפגש
+      '<div class="type-toggle">' +
+        '<button type="button" class="type-btn' + (isOneTime ? ' active' : '') + '" onclick="setMeetingType(\'' + empId + '\',\'' + mtg.id + '\',\'one_time\')">חד-פעמי</button>' +
+        '<button type="button" class="type-btn' + (!isOneTime ? ' active' : '') + '" onclick="setMeetingType(\'' + empId + '\',\'' + mtg.id + '\',\'recurring\')">קבוע</button>' +
+      '</div>' +
+
+      typeSpecificFields +
+
+      // שעה ומיקום — תמיד מוצגים
+      '<div class="fields-row">' +
+        '<div class="field-group">' +
+          '<label for="mtg-time-' + mtg.id + '">שעה <span class="req">*</span></label>' +
+          '<input type="time" id="mtg-time-' + mtg.id + '" value="' + escHtml(mtg.time) + '">' +
+          '<span class="error-msg" id="err-mtg-time-' + mtg.id + '">יש לבחור שעה</span>' +
+        '</div>' +
+        '<div class="field-group">' +
+          '<label for="mtg-location-' + mtg.id + '">מיקום <span class="req">*</span></label>' +
+          '<select id="mtg-location-' + mtg.id + '">' +
+            '<option value="">בחר מיקום...</option>' +
+            '<option value="חדר חוסן"' + (mtg.location === 'חדר חוסן' ? ' selected' : '') + '>חדר חוסן</option>' +
+            '<option value="משרד"'      + (mtg.location === 'משרד'      ? ' selected' : '') + '>משרד</option>' +
+          '</select>' +
+          '<span class="error-msg" id="err-mtg-location-' + mtg.id + '">יש לבחור מיקום</span>' +
+        '</div>' +
+      '</div>' +
+
+      // הערה אופציונלית עם הסבר
+      '<div class="field-group">' +
+        '<label for="mtg-note-' + mtg.id + '">הערה (אופציונלי)</label>' +
+        '<textarea id="mtg-note-' + mtg.id + '" placeholder="הערה תפעולית קצרה...">' + escHtml(mtg.note) + '</textarea>' +
+        '<div class="note-helper">שדה זה מיועד להערות תפעוליות קצרות בלבד. אין להזין מידע רגיש, רפואי, אישי, או תוכן השיחה.</div>' +
+      '</div>' +
+
+    '</div>'
+  );
+}
+
+
+// ══════════════════════════════════════════════════════
+// ניקוי כל הודעות השגיאה
+// ══════════════════════════════════════════════════════
+
+function clearErrors() {
+  document.querySelectorAll('.error-msg.show').forEach(function(el) { el.classList.remove('show'); });
+  document.querySelectorAll('.alert-err.show').forEach(function(el) { el.classList.remove('show'); });
+  document.querySelectorAll('.err').forEach(function(el) { el.classList.remove('err'); });
+}
+
+
+// הצגת שגיאה לשדה ספציפי
+function showFieldError(inputId, errId) {
+  var inp = document.getElementById(inputId);
+  var err = document.getElementById(errId);
+  if (inp) inp.classList.add('err');
+  if (err) err.classList.add('show');
+}
+
+
+// ══════════════════════════════════════════════════════
+// ולידציה — בודקת את כל השדות ומחזירה true/false
+// ══════════════════════════════════════════════════════
+
+function validateForm() {
+  collectFromDOM();
+  clearErrors();
+  var valid = true;
+
+  // בדיקת פרטי מפקח
+  if (!state.supervisor.name.trim()) {
+    showFieldError('sup-name', 'err-sup-name');
+    valid = false;
+  }
+  if (!state.supervisor.role.trim()) {
+    showFieldError('sup-role', 'err-sup-role');
+    valid = false;
+  }
+  // מייל נדרש רק בהגשה ראשונה — לא במצב ניהול (השרת שומר את המייל הקיים)
+  if (!managementMode) {
+    var emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRe.test(state.supervisor.email.trim())) {
+      showFieldError('sup-email', 'err-sup-email');
+      valid = false;
+    }
+  }
+
+  // בדיקה שיש לפחות עובד אחד
+  if (state.employees.length === 0) {
+    var noEmpEl = document.getElementById('err-no-employees');
+    if (noEmpEl) noEmpEl.classList.add('show');
+    valid = false;
+  }
+
+  // בדיקת כל עובד ומפגשיו
+  state.employees.forEach(function(emp) {
+    if (!emp.name.trim()) {
+      showFieldError('emp-name-' + emp.id, 'err-emp-name-' + emp.id);
+      valid = false;
+    }
+    if (!emp.role.trim()) {
+      showFieldError('emp-role-' + emp.id, 'err-emp-role-' + emp.id);
+      valid = false;
+    }
+
+    // בדיקה שיש לפחות מפגש אחד
+    if (emp.meetings.length === 0) {
+      var noMtgEl = document.getElementById('err-emp-mtg-' + emp.id);
+      if (noMtgEl) noMtgEl.classList.add('show');
+      valid = false;
+    }
+
+    emp.meetings.forEach(function(mtg) {
+      if (mtg.type === 'one_time' && !mtg.date) {
+        showFieldError('mtg-date-' + mtg.id, 'err-mtg-date-' + mtg.id);
+        valid = false;
+      }
+      if (mtg.type === 'recurring' && !mtg.dayOfWeek) {
+        showFieldError('mtg-dow-' + mtg.id, 'err-mtg-dow-' + mtg.id);
+        valid = false;
+      }
+      if (!mtg.time) {
+        showFieldError('mtg-time-' + mtg.id, 'err-mtg-time-' + mtg.id);
+        valid = false;
+      }
+      if (!mtg.location) {
+        showFieldError('mtg-location-' + mtg.id, 'err-mtg-location-' + mtg.id);
+        valid = false;
+      }
+    });
+  });
+
+  return valid;
+}
+
+
+// ══════════════════════════════════════════════════════
+// מעבר למסך סיכום
+// ══════════════════════════════════════════════════════
+
+function goToReview() {
+  if (!validateForm()) {
+    // גלילה לשגיאה הראשונה
+    var firstErr = document.querySelector('.error-msg.show, .alert-err.show');
+    if (firstErr) {
+      setTimeout(function() {
+        firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
+    }
+    return;
+  }
+  renderReview();
+  // עדכון טקסט כפתור השליחה לפי מצב
+  var btnSubmit = document.getElementById('btn-submit');
+  if (btnSubmit) {
+    btnSubmit.textContent = managementMode ? 'שמירת השינויים' : 'שליחת הטופס';
+  }
+  showScreen('review');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+
+// ══════════════════════════════════════════════════════
+// חזרה לטופס מהסיכום (שומר את הנתונים)
+// ══════════════════════════════════════════════════════
+
+function goToForm() {
+  showScreen('form');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+
+// ══════════════════════════════════════════════════════
+// רינדור מסך הסיכום מה-state
+// ══════════════════════════════════════════════════════
+
+function renderReview() {
+  var container = document.getElementById('review-content');
+  if (!container) return;
+
+  var s = state.supervisor;
+
+  var empsHtml = state.employees.map(function(emp) {
+    var mtgsHtml = emp.meetings.map(function(mtg) {
+      var typeLabel = mtg.type === 'one_time' ? 'מפגש חד-פעמי' : 'מפגש קבוע';
+      var dateDisp  = mtg.type === 'one_time'
+        ? escHtml(mtg.date) + ' (יום ' + escHtml(mtg.dayOfWeek) + ')'
+        : 'יום ' + escHtml(mtg.dayOfWeek);
+      var noteHtml = mtg.note
+        ? '<div style="font-size:0.82rem;color:var(--muted);margin-top:5px">הערה: ' + escHtml(mtg.note) + '</div>'
+        : '';
+      return (
+        '<div class="review-meeting">' +
+          '<div class="review-mtg-type">' + typeLabel + '</div>' +
+          '<div>' + dateDisp + ' &nbsp;|&nbsp; ' + escHtml(mtg.time) + ' &nbsp;|&nbsp; ' + escHtml(mtg.location) + '</div>' +
+          noteHtml +
+        '</div>'
+      );
+    }).join('');
+
+    return (
+      '<div class="review-employee">' +
+        '<div class="review-emp-name">'  + escHtml(emp.name) + '</div>' +
+        '<div class="review-emp-role">'  + escHtml(emp.role) + '</div>' +
+        mtgsHtml +
+      '</div>'
+    );
+  }).join('');
+
+  container.innerHTML = (
+    '<div class="review-supervisor">' +
+      '<div style="font-weight:700;font-size:1rem;color:var(--primary);margin-bottom:10px">פרטי מפקח/ת או ממונה</div>' +
+      '<div class="review-grid">' +
+        '<div><div class="review-label">שם מלא</div><div class="review-value">' + escHtml(s.name) + '</div></div>' +
+        '<div><div class="review-label">תפקיד</div><div class="review-value">'  + escHtml(s.role) + '</div></div>' +
+      '</div>' +
+      (managementMode ? '' :
+        '<div style="margin-top:10px">' +
+          '<div class="review-label">מייל</div>' +
+          '<div class="review-value" dir="ltr" style="text-align:right">' + escHtml(s.email) + '</div>' +
+        '</div>'
+      ) +
+    '</div>' +
+    '<div style="font-weight:700;font-size:1rem;color:var(--primary);margin-bottom:12px">עובדים/ות ומפגשים</div>' +
+    empsHtml
+  );
+}
+
+
+// ══════════════════════════════════════════════════════
+// ייצוא PDF — פותח חלון הדפסה עם תוכן מסכם
+// לא שולח נתונים לשרת ולא משנה את ה-state
+// ══════════════════════════════════════════════════════
+
+function downloadPdf() {
+  // עדכון state מה-DOM לפני הייצוא
+  collectFromDOM();
+
+  var s = state.supervisor;
+
+  // חישוב שם יום מתאריך — לשימוש ב-PDF (עצמאי מהשרת)
+  function dayFromDate(dateStr) {
+    if (!dateStr) return '';
+    var d = new Date(dateStr + 'T12:00:00');
+    if (isNaN(d.getTime())) return '';
+    return DAYS_HE[d.getDay()];
+  }
+
+  // בניית HTML לכל עובד/ת ומפגשיהם
+  var empsHtml = state.employees.map(function(emp) {
+    var mtgsHtml = emp.meetings.map(function(mtg) {
+      var typeLabel = mtg.type === 'one_time' ? 'מפגש חד-פעמי' : 'מפגש קבוע';
+      var day = mtg.type === 'one_time' ? dayFromDate(mtg.date) : mtg.dayOfWeek;
+      var rows = '<div class="ml">' + escHtml(typeLabel) + '</div>';
+      if (mtg.type === 'one_time') {
+        rows += '<div class="mr"><span class="lbl">תאריך:</span> ' + escHtml(mtg.date) + '</div>';
+      }
+      if (day) {
+        rows += '<div class="mr"><span class="lbl">יום:</span> ' + escHtml(day) + '</div>';
+      }
+      rows += '<div class="mr"><span class="lbl">שעה:</span> ' + escHtml(mtg.time) + '</div>';
+      rows += '<div class="mr"><span class="lbl">מיקום:</span> ' + escHtml(mtg.location) + '</div>';
+      if (mtg.note && mtg.note.trim()) {
+        rows += '<div class="mr note"><span class="lbl">הערה:</span> ' + escHtml(mtg.note.trim()) + '</div>';
+      }
+      return '<div class="mtg">' + rows + '</div>';
+    }).join('');
+
+    return (
+      '<div class="emp">' +
+        '<div class="en">' + escHtml(emp.name) + '</div>' +
+        '<div class="er">' + escHtml(emp.role) + '</div>' +
+        mtgsHtml +
+      '</div>'
+    );
+  }).join('');
+
+  var html = (
+    '<!DOCTYPE html>' +
+    '<html lang="he" dir="rtl">' +
+    '<head>' +
+    '<meta charset="UTF-8">' +
+    '<title>שיח הקשבה לחיזוק החוסן — תוכנית מפגשים</title>' +
+    '<style>' +
+    '*{box-sizing:border-box;margin:0;padding:0}' +
+    'html{direction:rtl}' +
+    'body{font-family:Arial,Tahoma,sans-serif;color:#1c2333;padding:20px;font-size:13px;line-height:1.7}' +
+    'h1{font-size:1.2rem;text-align:center;color:#2557a7;border-bottom:2px solid #2557a7;padding-bottom:8px;margin-bottom:18px}' +
+    '.st{font-weight:bold;font-size:.9rem;color:#2557a7;border-bottom:1px solid #c2d8f5;padding-bottom:4px;margin-bottom:10px;margin-top:18px}' +
+    '.sup{background:#eaf1fb;border-radius:6px;padding:12px 14px;margin-bottom:4px}' +
+    '.sr{margin-bottom:4px;font-size:.9rem}' +
+    '.sr b{margin-left:6px}' +
+    '.emp{border-right:3px solid #2557a7;padding:10px 12px;background:#f8fafc;border-radius:4px;margin-bottom:12px;page-break-inside:avoid}' +
+    '.en{font-weight:bold;font-size:.9rem;margin-bottom:2px}' +
+    '.er{color:#6b7280;font-size:.82rem;margin-bottom:8px}' +
+    '.mtg{border:1px solid #dde3ed;border-radius:4px;padding:9px 11px;margin-top:7px;background:white;page-break-inside:avoid}' +
+    '.ml{font-weight:600;font-size:.82rem;color:#2557a7;margin-bottom:5px}' +
+    '.mr{font-size:.82rem;margin-top:3px;display:flex;gap:6px}' +
+    '.lbl{color:#6b7280;min-width:52px;flex-shrink:0}' +
+    '.note{font-style:italic}' +
+    '@page{size:A4;margin:20mm 22mm}' +
+    '@media print{body{padding:0}}' +
+    '</style>' +
+    '</head>' +
+    '<body>' +
+    '<h1>שיח הקשבה לחיזוק החוסן — תוכנית מפגשים</h1>' +
+    '<div class="sup">' +
+      '<div class="st" style="margin-top:0">פרטי מפקח/ת או ממונה</div>' +
+      '<div class="sr"><b>שם:</b>' + escHtml(s.name) + '</div>' +
+      '<div class="sr"><b>תפקיד:</b>' + escHtml(s.role) + '</div>' +
+    '</div>' +
+    '<div class="st">עובדים/ות ומפגשים</div>' +
+    empsHtml +
+    '</body></html>'
+  );
+
+  var win = window.open('', '_blank', 'width=820,height=960');
+  if (!win) {
+    alert('הדפדפן חסם פתיחת חלון. אנא אפשר popups לדף זה ונסה שוב.');
+    return;
+  }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  // המתנה קצרה לסיום הרינדור לפני פתיחת דיאלוג ההדפסה
+  setTimeout(function() { win.print(); }, 300);
+}
+
+
+// ══════════════════════════════════════════════════════
+// שליחה ל-Apps Script — Phase 1
+// ══════════════════════════════════════════════════════
+
+function submitForm() {
+  // במצב ניהול: save_report במקום create_report
+  if (managementMode) {
+    saveReport();
+    return;
+  }
+
+  var btn    = document.getElementById('btn-submit');
+  var errDiv = document.getElementById('submit-error');
+
+  // נועל כפתור ומנקה שגיאה קודמת
+  if (btn)    { btn.disabled = true; btn.textContent = 'שולח...'; }
+  if (errDiv) { errDiv.style.display = 'none'; errDiv.textContent = ''; }
+
+  // בניית payload מה-state (state כבר עודכן ב-collectFromDOM בשלב הסיכום)
+  var payload = {
+    supervisor: {
+      name:  state.supervisor.name.trim(),
+      role:  state.supervisor.role.trim(),
+      email: state.supervisor.email.trim()
+    },
+    employees: state.employees.map(function(emp) {
+      return {
+        name: emp.name.trim(),
+        role: emp.role.trim(),
+        meetings: emp.meetings.map(function(mtg) {
+          return {
+            type:      mtg.type,
+            date:      mtg.date      || '',
+            dayOfWeek: mtg.dayOfWeek || '',
+            time:      mtg.time,
+            location:  mtg.location,
+            note:      (mtg.note || '').trim()
+          };
+        })
+      };
+    })
+  };
+
+  // שליחה בפורמט text/plain — מונעת preflight CORS (שאינו נתמך ב-Apps Script)
+  // אין mode: 'no-cors' — חייבים לקרוא את התגובה כדי לאמת הצלחה
+  fetch(APPS_SCRIPT_URL, {
+    method:   'POST',
+    headers:  { 'Content-Type': 'text/plain;charset=UTF-8' },
+    body:     JSON.stringify(payload),
+    redirect: 'follow'
+  })
+  .then(function(res) {
+    // תגובה opaque = לא ניתן לאמת הצלחה — מטפלים כשגיאה
+    if (res.type === 'opaque') {
+      throw new Error('Received opaque response — cannot verify submission result.');
+    }
+    return res.json();
+  })
+  .then(function(data) {
+    // הצלחה רק עם status === 'success' מפורש — completion רשת אינה הצלחה
+    if (data && data.status === 'success') {
+      if (data.managementToken) {
+        showSuccessWithLink(data.managementToken);
+      } else {
+        showScreen('success');
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      showSubmitError((data && data.message) ? data.message : 'שגיאה לא ידועה. נסה שוב.');
+    }
+  })
+  .catch(function(err) {
+    console.error('Submission error:', err);
+    showSubmitError('לא ניתן להגיע לשרת. בדוק את החיבור לאינטרנט ונסה שוב.');
+  })
+  .then(function() {
+    // שחרור הכפתור תמיד — הצלחה או כשל
+    if (btn) { btn.disabled = false; btn.textContent = 'שליחת הטופס'; }
+  });
+}
+
+
+// ══════════════════════════════════════════════════════
+// הצגת שגיאת שליחה ליד הכפתור
+// ══════════════════════════════════════════════════════
+
+function showSubmitError(message) {
+  var errDiv = document.getElementById('submit-error');
+  if (errDiv) {
+    errDiv.textContent = message;
+    errDiv.style.display = 'block';
+    errDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+
+// ══════════════════════════════════════════════════════
+// החלפת מסך
+// ══════════════════════════════════════════════════════
+
+function showScreen(name) {
+  ['form', 'review', 'success', 'update-success', 'loading', 'load-error'].forEach(function(s) {
+    var el = document.getElementById('screen-' + s);
+    if (el) el.style.display = (s === name) ? 'block' : 'none';
+  });
+}
+
+
+// ══════════════════════════════════════════════════════
+// הצגת מסך הצלחה עם קישור ניהול (Phase 2)
+// ══════════════════════════════════════════════════════
+
+function showSuccessWithLink(rawToken) {
+  var managementUrl = 'https://shlomot.vercel.app/#token=' + rawToken;
+  var section = document.getElementById('management-link-section');
+  var urlBox  = document.getElementById('management-link-url');
+  if (section) section.style.display = 'block';
+  if (urlBox)  urlBox.textContent    = managementUrl;
+  showScreen('success');
+}
+
+
+// ══════════════════════════════════════════════════════
+// העתקת קישור הניהול ללוח
+// ══════════════════════════════════════════════════════
+
+function copyManagementLink() {
+  var urlBox = document.getElementById('management-link-url');
+  if (!urlBox) return;
+  var text = urlBox.textContent;
+  var btn  = document.getElementById('btn-copy-link');
+
+  function markCopied() {
+    if (btn) {
+      btn.textContent = 'הקישור הועתק ✓';
+      setTimeout(function() { btn.textContent = 'העתקת הקישור'; }, 2500);
+    }
+  }
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(markCopied);
+  } else {
+    // fallback לדפדפנים ישנים
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    markCopied();
+  }
+}
+
+
+// ══════════════════════════════════════════════════════
+// הצגת שגיאת טעינה (load_report)
+// ══════════════════════════════════════════════════════
+
+function reloadFromServer() {
+  var banner = document.getElementById('conflict-banner');
+  if (banner) banner.style.display = 'none';
+  loadReport();
+}
+
+
+function showLoadError(message) {
+  var errEl = document.getElementById('load-error-message');
+  if (errEl) errEl.textContent = message || 'הגישה אינה מורשית.';
+  showScreen('load-error');
+}
+
+
+// ══════════════════════════════════════════════════════
+// טעינת דוח קיים (load_report) — מצב ניהול בלבד
+// ══════════════════════════════════════════════════════
+
+function loadReport() {
+  showScreen('loading');
+
+  fetch(APPS_SCRIPT_URL, {
+    method:   'POST',
+    headers:  { 'Content-Type': 'text/plain;charset=UTF-8' },
+    body:     JSON.stringify({ action: 'load_report', token: currentToken }),
+    redirect: 'follow'
+  })
+  .then(function(res) {
+    if (res.type === 'opaque') throw new Error('opaque response');
+    return res.text();
+  })
+  .then(function(text) {
+    var data;
+    try { data = JSON.parse(text); } catch (e) {
+      throw new Error('invalid JSON');
+    }
+    if (!data || data.status !== 'success') {
+      showLoadError((data && data.message) ? data.message : 'הגישה אינה מורשית.');
+      return;
+    }
+
+    // אתחול state מהתגובה
+    state.reportVersion    = data.reportVersion;
+    state.supervisor.name  = data.supervisor.name;
+    state.supervisor.role  = data.supervisor.role;
+    state.supervisor.email = '';
+    deletedEmployeeIds     = [];
+    deletedMeetingIds      = [];
+
+    // המרת עובדים ומפגשים ממבנה השרת למבנה הטופס
+    state.employees = (data.employees || []).map(function(emp) {
+      var empId = 'e' + (nextEmpId++);
+      return {
+        id:         empId,
+        employeeId: emp.employeeId,   // UUID יציב לתשתית save_report
+        name:       emp.name,
+        role:       emp.role,
+        meetings:   (emp.meetings || []).map(function(mtg) {
+          var mtgId = 'm' + (nextMtgId++);
+          return {
+            id:        mtgId,
+            meetingId: mtg.meetingId, // UUID יציב לתשתית save_report
+            type:      mtg.type,
+            date:      mtg.date      || '',
+            dayOfWeek: mtg.dayOfWeek || '',
+            time:      mtg.time,
+            location:  mtg.location,
+            note:      mtg.note      || ''
+          };
+        })
+      };
+    });
+
+    // מילוי שדות supervisor ב-DOM
+    var nEl = document.getElementById('sup-name');
+    var rEl = document.getElementById('sup-role');
+    if (nEl) nEl.value = state.supervisor.name;
+    if (rEl) rEl.value = state.supervisor.role;
+
+    renderEmployees();
+    showScreen('form');
+    window.scrollTo({ top: 0 });
+  })
+  .catch(function() {
+    showLoadError('לא ניתן להגיע לשרת. בדוק/י את החיבור לאינטרנט ונסה/י שנית.');
+  });
+}
+
+
+// ══════════════════════════════════════════════════════
+// שמירת עדכון (save_report) — מצב ניהול בלבד
+// ══════════════════════════════════════════════════════
+
+function saveReport() {
+  if (!cryptoAvailable()) return;
+
+  var btn          = document.getElementById('btn-submit');
+  var errDiv       = document.getElementById('submit-error');
+  var conflictDiv  = document.getElementById('conflict-banner');
+  if (btn)         { btn.disabled = true; btn.textContent = 'שומר...'; }
+  if (errDiv)      { errDiv.style.display = 'none'; errDiv.textContent = ''; }
+  if (conflictDiv) { conflictDiv.style.display = 'none'; }
+
+  var payload = {
+    action:                'save_report',
+    token:                 currentToken,
+    operationId:           crypto.randomUUID(), // UUID ייחודי לidempotency
+    expectedReportVersion: state.reportVersion,
+    supervisor: {
+      name: state.supervisor.name.trim(),
+      role: state.supervisor.role.trim()
+    },
+    employees: state.employees.map(function(emp) {
+      return {
+        employeeId: emp.employeeId,
+        name:       emp.name.trim(),
+        role:       emp.role.trim(),
+        meetings:   emp.meetings.map(function(mtg) {
+          return {
+            meetingId: mtg.meetingId,
+            type:      mtg.type,
+            date:      mtg.date      || '',
+            dayOfWeek: mtg.dayOfWeek || '',
+            time:      mtg.time,
+            location:  mtg.location,
+            note:      (mtg.note || '').trim()
+          };
+        })
+      };
+    }),
+    deletedEmployeeIds: deletedEmployeeIds.slice(),
+    deletedMeetingIds:  deletedMeetingIds.slice()
+  };
+
+  fetch(APPS_SCRIPT_URL, {
+    method:   'POST',
+    headers:  { 'Content-Type': 'text/plain;charset=UTF-8' },
+    body:     JSON.stringify(payload),
+    redirect: 'follow'
+  })
+  .then(function(res) {
+    if (res.type === 'opaque') throw new Error('opaque response');
+    return res.text();
+  })
+  .then(function(text) {
+    var data;
+    try { data = JSON.parse(text); } catch (e) { throw new Error('invalid JSON'); }
+    if (!data) throw new Error('empty response');
+
+    if (data.status === 'success') {
+      // עדכון גרסה מקומית + ניקוי מחיקות בוצעו
+      state.reportVersion = data.newReportVersion;
+      deletedEmployeeIds  = [];
+      deletedMeetingIds   = [];
+      showScreen('update-success');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    } else if (data.status === 'conflict') {
+      // גרסה שונה — מציגים באנר; המשתמש/ת בוחר/ת מה לעשות
+      var cBanner = document.getElementById('conflict-banner');
+      if (cBanner) cBanner.style.display = 'block';
+      if (btn) { btn.disabled = false; btn.textContent = 'שמירת השינויים'; }
+
+    } else if (data.status === 'pending') {
+      showSubmitError('הבקשה בעיבוד. נסה/י שוב בעוד מספר שניות.');
+      if (btn) { btn.disabled = false; btn.textContent = 'שמירת השינויים'; }
+
+    } else {
+      showSubmitError((data && data.message) ? data.message : 'שגיאה לא ידועה. נסה/י שוב.');
+      if (btn) { btn.disabled = false; btn.textContent = 'שמירת השינויים'; }
+    }
+  })
+  .catch(function() {
+    showSubmitError('לא ניתן להגיע לשרת. בדוק/י את החיבור לאינטרנט ונסה/י שנית.');
+    if (btn) { btn.disabled = false; btn.textContent = 'שמירת השינויים'; }
+  });
+}
+
+
+// ══════════════════════════════════════════════════════
+// אתחול — מוסיף עובד ומפגש ראשוניים בטעינת הדף
+// ══════════════════════════════════════════════════════
+
+window.addEventListener('DOMContentLoaded', function() {
+  // זיהוי מצב ניהול: #token=<43 תווים base64url>
+  var hash       = window.location.hash;
+  var tokenMatch = hash.match(/^#token=([A-Za-z0-9_\-]{43})$/);
+
+  if (tokenMatch) {
+    managementMode = true;
+    currentToken   = tokenMatch[1];
+    // הסתרת שדה המייל — אינו נדרש ואינו מוחזר ע"י load_report
+    var emailSection = document.getElementById('sup-email-section');
+    if (emailSection) emailSection.style.display = 'none';
+    loadReport();
+  } else {
+    addEmployee();
+  }
+});
+</script>
+
+</body>
+</html>
