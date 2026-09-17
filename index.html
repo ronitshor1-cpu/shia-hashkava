@@ -488,6 +488,17 @@
       margin-bottom: 10px;
     }
 
+    .email-status-ok {
+      font-size: 0.85rem; color: #065f46;
+      background: #ecfdf5; border: 1px solid #6ee7b7;
+      border-radius: var(--r-sm); padding: 8px 12px; margin-top: 10px;
+    }
+    .email-status-warn {
+      font-size: 0.85rem; color: #7c4a03;
+      background: #fdf6ec; border: 1px solid #e5a428;
+      border-radius: var(--r-sm); padding: 8px 12px; margin-top: 10px;
+    }
+
     /* ── מסך עדכון מוצלח / טעינה / שגיאת טעינה ── */
     .update-success-box { text-align: center; padding: 20px 0 14px; }
     .loading-box { text-align: center; padding: 40px 20px; color: var(--muted); }
@@ -646,7 +657,6 @@
           <div class="management-link-sub">
             שמור/י את הקישור הזה במקום בטוח. הוא יאפשר לך לחזור ולעדכן את
             הדיווח בכל עת — להוסיף עובדים, לשנות פרטי מפגשים, או להסיר ישנים.
-            <br>הקישור אינו נשלח למייל — שמור/י אותו עכשיו.
           </div>
           <div class="management-link-url" id="management-link-url"></div>
           <button type="button" class="btn btn-secondary" onclick="copyManagementLink()"
@@ -654,6 +664,7 @@
                   style="font-size:0.9rem;padding:8px 18px;min-height:40px">
             העתקת הקישור
           </button>
+          <div id="email-status" style="display:none;"></div>
         </div>
 
       </div>
@@ -1438,7 +1449,7 @@ function submitForm() {
     // הצלחה רק עם status === 'success' מפורש — completion רשת אינה הצלחה
     if (data && data.status === 'success') {
       if (data.managementToken) {
-        showSuccessWithLink(data.managementToken);
+        showSuccessWithLink(data.managementToken, data.emailSent);
       } else {
         showScreen('success');
       }
@@ -1488,12 +1499,23 @@ function showScreen(name) {
 // הצגת מסך הצלחה עם קישור ניהול (Phase 2)
 // ══════════════════════════════════════════════════════
 
-function showSuccessWithLink(rawToken) {
+function showSuccessWithLink(rawToken, emailSent) {
   var managementUrl = 'https://shlomot.vercel.app/#token=' + rawToken;
-  var section = document.getElementById('management-link-section');
-  var urlBox  = document.getElementById('management-link-url');
+  var section     = document.getElementById('management-link-section');
+  var urlBox      = document.getElementById('management-link-url');
+  var emailStatus = document.getElementById('email-status');
   if (section) section.style.display = 'block';
   if (urlBox)  urlBox.textContent    = managementUrl;
+  if (emailStatus) {
+    emailStatus.style.display = 'block';
+    if (emailSent === true) {
+      emailStatus.className   = 'email-status-ok';
+      emailStatus.textContent = 'הקישור נשלח גם לכתובת המייל שהזנת.';
+    } else {
+      emailStatus.className   = 'email-status-warn';
+      emailStatus.textContent = 'לא הצלחנו לשלוח את הקישור למייל — העתק/י ושמור/י אותו עכשיו.';
+    }
+  }
   showScreen('success');
 }
 
